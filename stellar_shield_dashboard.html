@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stellar Shield - Next-Gen Signer & Threshold Management</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        stellar: {
+                            50: '#f0f4ff',
+                            100: '#e0e9fe',
+                            400: '#818cf8',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            900: '#1e1b4b',
+                            accent: '#00f2fe',
+                            quantum: '#a855f7',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0b0f19;
+            color: #f3f4f6;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            overflow-x: hidden;
+        }
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-panel-interactive {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-panel-interactive:hover {
+            border-color: rgba(99, 102, 241, 0.4);
+            box-shadow: 0 10px 30px -10px rgba(99, 102, 241, 0.2);
+        }
+        .glow-accent {
+            box-shadow: 0 0 20px rgba(0, 242, 254, 0.15);
+        }
+        .glow-purple {
+            box-shadow: 0 0 25px rgba(168, 85, 247, 0.2);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.3);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.6);
+        }
+        /* Custom range slider styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+        input[type=range]:focus {
+            outline: none;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            background: #6366f1;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.8);
+            margin-top: -6px;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between text-slate-200 selection:bg-indigo-500 selection:text-white">
+
+    <!-- Top Header Navigation -->
+    <header class="sticky top-0 z-40 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md px-4 lg:px-8 py-3.5">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 p-0.5 shadow-lg shadow-indigo-500/20">
+                    <div class="h-full w-full bg-slate-950 rounded-[10px] flex items-center justify-center">
+                        <i class="fa-solid font-bold fa-shield-halved text-indigo-400 text-lg"></i>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="font-extrabold text-lg tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-300 bg-clip-text text-transparent">STELLAR SHIELD</span>
+                        <span class="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">Studio</span>
+                    </div>
+                    <p class="text-xs text-slate-400 hidden sm:block">Visual Signer Architecture & Security Studio</p>
+                </div>
+            </div>
+
+            <!-- Network Status & Account Selector -->
+            <div class="flex items-center gap-3">
+                <div class="hidden md:flex items-center gap-2 bg-slate-900/80 border border-slate-800 rounded-lg px-3 py-1.5 text-xs">
+                    <span class="relative flex h-2 w-2">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    <span class="text-slate-400">Network:</span>
+                    <span class="font-semibold text-slate-200">Mainnet</span>
+                </div>
+
+                <!-- Account Badge -->
+                <div class="flex items-center gap-2 bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-xl px-3 py-1.5 transition-colors cursor-pointer" onclick="copyAddress()">
+                    <div class="w-6 h-6 rounded-full bg-indigo-600/30 text-indigo-400 flex items-center justify-center text-xs font-mono font-bold">
+                        G
+                    </div>
+                    <div class="text-left">
+                        <div class="text-xs font-mono font-medium text-slate-200" id="current-account-short">GDKA...9X4Z</div>
+                        <div class="text-[10px] text-slate-400 flex items-center gap-1">
+                            <span>1,420.5 XLM</span>
+                            <i class="fa-regular fa-copy text-[9px] text-slate-500 hover:text-slate-300"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="openSimulationModal()" class="hidden sm:flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-medium text-xs px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-indigo-600/20 active:scale-95">
+                    <i class="fa-solid fa-code-commit">="</i>
+                    <span>Review XDR</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="max-w-7xl mx-auto px-4 lg:px-8 py-6 w-full flex-grow space-y-6">
+
+        <!-- Top Account Security Health Banner -->
+        <section class="glass-panel rounded-2xl p-5 md:p-6 relative overflow-hidden">
+            <div class="absolute -right-10 -top-10 w-64 h-64 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute right-1/3 -bottom-10 w-64 h-64 bg-cyan-600/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+                <div class="flex items-start gap-4">
+                    <div id="security-icon-container" class="h-14 w-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                        <i id="security-icon" class="fa-solid fa-shield-check text-2xl text-emerald-400"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h2 class="text-lg font-bold text-white">Account Security State</h2>
+                            <span id="security-status-badge" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                Robust Multisig Active
+                            </span>
+                        </div>
+                        <p id="security-status-desc" class="text-xs text-slate-400 mt-1 max-w-2xl">
+                            Account requires multiple distinct authorizations for critical operations. Master key is safely backed up with recovery thresholds configured.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-3 gap-3 md:gap-6 border-t md:border-t-0 md:border-l border-slate-800 pt-4 md:pt-0 md:pl-6">
+                    <div>
+                        <div class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Active Signers</div>
+                        <div class="text-xl font-bold text-white font-mono mt-0.5" id="stat-active-signers">3</div>
+                    </div>
+                    <div>
+                        <div class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Total Weight</div>
+                        <div class="text-xl font-bold text-white font-mono mt-0.5" id="stat-total-weight">25</div>
+                    </div>
+                    <div>
+                        <div class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">High Threshold</div>
+                        <div class="text-xl font-bold text-indigo-400 font-mono mt-0.5" id="stat-high-threshold">15</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Navigation Tabs -->
+        <div class="flex items-center gap-2 border-b border-slate-800 pb-2 overflow-x-auto custom-scrollbar">
+            <button onclick="switchTab('dashboard')" id="tab-dashboard" class="tab-btn px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 transition-all">
+                <i class="fa-solid fa-sliders"></i>
+                <span>Signers & Thresholds</span>
+            </button>
+            <button onclick="switchTab('simulator')" id="tab-simulator" class="tab-btn px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 bg-slate-900/60 text-slate-400 hover:text-slate-200 border border-transparent hover:border-slate-800 transition-all">
+                <i class="fa-solid fa-vial"></i>
+                <span>Loss Simulator ("What If?")</span>
+                <span class="px-1.5 py-0.2 text-[9px] bg-slate-800 text-slate-300 rounded">Interactive</span>
+            </button>
+            <button onclick="switchTab('quantum')" id="tab-quantum" class="tab-btn px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 bg-slate-900/60 text-slate-400 hover:text-slate-200 border border-transparent hover:border-slate-800 transition-all">
+                <i class="fa-solid fa-atom text-purple-400"></i>
+                <span>Quantum-Safe Swap</span>
+                <span class="px-1.5 py-0.2 text-[9px] bg-purple-500/20 text-purple-300 border border-purple-500/30 rounded">Post-Quantum</span>
+            </button>
+        </div>
+
+        <!-- TAB 1: MAIN SIGNERS & THRESHOLDS DASHBOARD -->
+        <div id="view-dashboard" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- Left Panel: Signer Management (7 Cols) -->
+            <div class="lg:col-span-7 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-base font-bold text-white flex items-center gap-2">
+                            <span>Key Authorization Cards</span>
+                            <span class="text-xs font-mono font-normal text-slate-400" id="signer-count-label">(3 Signers)</span>
+                        </h3>
+                        <p class="text-xs text-slate-400">Assign key weights. Total accumulated weight unlocks thresholds.</p>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <button onclick="openPresetsModal()" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-xs font-medium flex items-center gap-1.5 transition-colors">
+                            <i class="fa-solid fa-wand-magic-sparkles text-indigo-400"></i>
+                            <span>Presets</span>
+                        </button>
+                        <button onclick="openAddSignerModal()" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium flex items-center gap-1.5 transition-colors shadow-sm">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Add Signer</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Active Signers Cards List Container -->
+                <div id="signers-container" class="space-y-3">
+                    <!-- Dynamic Signer Cards Injected Here by JS -->
+                </div>
+            </div>
+
+            <!-- Right Panel: Threshold Configuration & Pre-Flight Validation (5 Cols) -->
+            <div class="lg:col-span-5 space-y-4">
+                <div class="glass-panel rounded-2xl p-5 space-y-5 sticky top-20">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                        <div>
+                            <h3 class="text-base font-bold text-white">Action Thresholds</h3>
+                            <p class="text-xs text-slate-400">Set weight needed for operations</p>
+                        </div>
+                        <span class="text-xs font-mono bg-indigo-500/10 text-indigo-400 px-2.5 py-1 rounded-lg border border-indigo-500/20">SetOptions</span>
+                    </div>
+
+                    <!-- Lockout Risk Warning Meter -->
+                    <div id="preflight-banner" class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-xs space-y-1 transition-all">
+                        <!-- Dynamic Status Injected Here -->
+                    </div>
+
+                    <!-- Threshold Sliders -->
+                    <div class="space-y-4">
+                        <!-- Low Threshold -->
+                        <div class="space-y-1.5">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="font-medium text-slate-300 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-bolt text-yellow-400 text-[10px]"></i>
+                                    Low Threshold
+                                </span>
+                                <span class="text-slate-400 text-[11px]">Allow Trustlines, Bumps</span>
+                                <span class="font-mono font-bold text-indigo-400 text-sm" id="val-low-threshold">5</span>
+                            </div>
+                            <input type="range" id="input-low-threshold" min="0" max="30" value="5" class="w-full" oninput="updateThresholdsFromInputs()">
+                        </div>
+
+                        <!-- Medium Threshold -->
+                        <div class="space-y-1.5">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="font-medium text-slate-300 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-paper-plane text-cyan-400 text-[10px]"></i>
+                                    Medium Threshold
+                                </span>
+                                <span class="text-slate-400 text-[11px]">Payments, DEX Trading</span>
+                                <span class="font-mono font-bold text-indigo-400 text-sm" id="val-med-threshold">10</span>
+                            </div>
+                            <input type="range" id="input-med-threshold" min="0" max="30" value="10" class="w-full" oninput="updateThresholdsFromInputs()">
+                        </div>
+
+                        <!-- High Threshold -->
+                        <div class="space-y-1.5">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="font-medium text-slate-300 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-key text-rose-400 text-[10px]"></i>
+                                    High Threshold
+                                </span>
+                                <span class="text-slate-400 text-[11px]">Signers & Merges</span>
+                                <span class="font-mono font-bold text-indigo-400 text-sm" id="val-high-threshold">15</span>
+                            </div>
+                            <input type="range" id="input-high-threshold" min="0" max="30" value="15" class="w-full" oninput="updateThresholdsFromInputs()">
+                        </div>
+                    </div>
+
+                    <!-- Master Weight Fast Control -->
+                    <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800/80 space-y-2">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="font-medium text-slate-300 flex items-center gap-1.5">
+                                <i class="fa-solid fa-crown text-amber-400"></i>
+                                Master Key Weight
+                            </span>
+                            <span class="font-mono font-bold text-slate-200" id="master-weight-display">10</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400">
+                            Setting Master Weight to <code class="text-rose-400 bg-slate-950 px-1 py-0.5 rounded">0</code> revokes the original key's standalone control.
+                        </p>
+                    </div>
+
+                    <!-- Actions / Submit -->
+                    <div class="pt-2">
+                        <button id="btn-submit-tx" onclick="openSimulationModal()" class="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-cyan-500 hover:from-indigo-500 hover:to-cyan-400 text-white font-semibold text-xs tracking-wide shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2 transition-all active:scale-[0.98]">
+                            <i class="fa-solid fa-paper-plane"></i>
+                            <span>Construct & Review Transaction</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: INTERACTIVE LOSS SIMULATOR ("WHAT IF?") -->
+        <div id="view-simulator" class="hidden space-y-6">
+            <div class="glass-panel rounded-2xl p-6">
+                <div class="max-w-2xl space-y-2">
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-vial text-cyan-400"></i>
+                        <span>"What-If?" Device & Signer Loss Simulator</span>
+                    </h3>
+                    <p class="text-xs text-slate-400">
+                        Test resilience against real-world accidents. Toggle key availability below to simulate losing a ledger, mobile phone, or secondary key, and observe whether your account retains sufficient weight to recover or execute payments.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
+                    <!-- Toggles Column -->
+                    <div class="lg:col-span-7 space-y-3">
+                        <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-400">Simulate Hardware / Signer Status</h4>
+                        <div id="simulator-keys-list" class="space-y-2.5">
+                            <!-- Dynamic Keys Injected Here -->
+                        </div>
+                    </div>
+
+                    <!-- Simulation Result Diagnostics -->
+                    <div class="lg:col-span-5 bg-slate-900/90 rounded-xl border border-slate-800 p-5 space-y-4">
+                        <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-400 border-b border-slate-800 pb-2">Simulation Test Results</h4>
+                        
+                        <div id="sim-results-container" class="space-y-4">
+                            <!-- Live Simulation Diagnostics Output -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: QUANTUM-SAFE MIGRATION TAB -->
+        <div id="view-quantum" class="hidden space-y-6">
+            <div class="glass-panel rounded-2xl p-6 relative overflow-hidden border-purple-500/20">
+                <div class="absolute -right-20 -top-20 w-80 h-80 bg-purple-600/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                <div class="max-w-3xl space-y-3">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-300 text-xs font-medium">
+                        <i class="fa-solid fa-atom animate-spin-slow"></i>
+                        <span>Post-Quantum Cryptography Readiness</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-white">Quantum-Safe Key Upgrade Wizard</h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        Stellar's architecture decouples account addresses (`G...`) from signing algorithms. When Post-Quantum signers (e.g., Dilithium, Falcon, or Stateed Hash Signers) deploy on Stellar, you can seamlessly migrate without changing your public wallet address or moving funds.
+                    </p>
+                </div>
+
+                <!-- Migration Stepper Pipeline -->
+                <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Step 1 -->
+                    <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4 space-y-2 relative">
+                        <div class="text-[10px] font-bold uppercase tracking-widest text-purple-400">Step 1</div>
+                        <h4 class="text-sm font-bold text-white">Attach PQ Signer</h4>
+                        <p class="text-xs text-slate-400">Generate a quantum-resilient keypair and register it as an active secondary signer with full weight.</p>
+                        <button onclick="executeQuantumStep(1)" id="pq-step-1-btn" class="w-full mt-2 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-medium text-xs transition-colors">
+                            Add PQ Key (Weight 15)
+                        </button>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4 space-y-2 relative">
+                        <div class="text-[10px] font-bold uppercase tracking-widest text-purple-400">Step 2</div>
+                        <h4 class="text-sm font-bold text-white">Verify Dual-Signature</h4>
+                        <p class="text-xs text-slate-400">Test signing a zero-XLM payment envelope with both legacy Ed25519 and Post-Quantum keys.</p>
+                        <button onclick="executeQuantumStep(2)" id="pq-step-2-btn" class="w-full mt-2 py-2 rounded-lg bg-slate-800 text-slate-400 font-medium text-xs cursor-not-allowed" disabled>
+                            Test Dual Sign
+                        </button>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4 space-y-2 relative">
+                        <div class="text-[10px] font-bold uppercase tracking-widest text-purple-400">Step 3</div>
+                        <h4 class="text-sm font-bold text-white">Deprecate Legacy Key</h4>
+                        <p class="text-xs text-slate-400">Set the original master Ed25519 key weight to zero. Account is now 100% quantum safe.</p>
+                        <button onclick="executeQuantumStep(3)" id="pq-step-3-btn" class="w-full mt-2 py-2 rounded-lg bg-slate-800 text-slate-400 font-medium text-xs cursor-not-allowed" disabled>
+                            Zero Ed25519 Weight
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mt-6 bg-slate-950 p-4 rounded-xl border border-slate-800 font-mono text-xs space-y-2">
+                    <div class="text-slate-400 text-[11px] font-sans flex items-center justify-between">
+                        <span>QUANTUM MIGRATION LOG</span>
+                        <span id="pq-status-indicator" class="text-purple-400">Ready to start</span>
+                    </div>
+                    <div id="pq-console" class="text-slate-300 text-[11px] h-24 overflow-y-auto custom-scrollbar space-y-1">
+                        <div>[SYSTEM]: Awaiting user initialization...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal 1: Add New Signer -->
+    <div id="modal-add-signer" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm hidden">
+        <div class="glass-panel w-full max-w-lg rounded-2xl p-6 space-y-5 border border-slate-700 shadow-2xl animate-in fade-in zoom-in duration-150">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-key text-indigo-400"></i>
+                    <span>Add New Signer</span>
+                </h3>
+                <button onclick="closeModal('modal-add-signer')" class="text-slate-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Signer Friendly Name</label>
+                    <input type="text" id="new-signer-name" placeholder="e.g. Ledger Nano X, Recovery Partner" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Public Key / Hash Key Address (G... or Hash)</label>
+                    <input type="text" id="new-signer-key" placeholder="GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-200 focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Key Type Badge</label>
+                        <select id="new-signer-badge" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+                            <option value="Hardware">Hardware Wallet</option>
+                            <option value="Mobile">Mobile Wallet</option>
+                            <option value="Backup">Social Recovery Key</option>
+                            <option value="Quantum">Post-Quantum Key</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Assigned Weight</label>
+                        <input type="number" id="new-signer-weight" value="10" min="1" max="100" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-200 focus:outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-2">
+                <button onclick="closeModal('modal-add-signer')" class="px-4 py-2 rounded-xl bg-slate-900 text-slate-300 hover:bg-slate-800 text-xs font-medium">Cancel</button>
+                <button onclick="confirmAddSigner()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium shadow-md">Add Signer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 2: Presets Selection -->
+    <div id="modal-presets" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm hidden">
+        <div class="glass-panel w-full max-w-xl rounded-2xl p-6 space-y-5 border border-slate-700 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-wand-magic-sparkles text-indigo-400"></i>
+                    <span>Select Security Preset Template</span>
+                </h3>
+                <button onclick="closeModal('modal-presets')" class="text-slate-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <!-- Preset Option 1 -->
+                <div onclick="applyPreset('2of2')" class="glass-panel-interactive p-4 rounded-xl cursor-pointer space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-white">2-of-2 Strict Multisig</span>
+                        <i class="fa-solid fa-lock text-indigo-400 text-xs"></i>
+                    </div>
+                    <p class="text-[11px] text-slate-400">Primary Key (Weight 10) + Hardware Key (Weight 10). Thresholds set to 20. Prevents single device theft.</p>
+                </div>
+
+                <!-- Preset Option 2 -->
+                <div onclick="applyPreset('social')" class="glass-panel-interactive p-4 rounded-xl cursor-pointer space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-white">Social Guardians</span>
+                        <i class="fa-solid fa-users text-cyan-400 text-xs"></i>
+                    </div>
+                    <p class="text-[11px] text-slate-400">Master Key (10) + 2 Trusted Friends (5 each). Threshold = 15. Requires 1 friend to recover if master lost.</p>
+                </div>
+
+                <!-- Preset Option 3 -->
+                <div onclick="applyPreset('pq_ready')" class="glass-panel-interactive p-4 rounded-xl cursor-pointer space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-white">Quantum Hybrid</span>
+                        <i class="fa-solid fa-atom text-purple-400 text-xs"></i>
+                    </div>
+                    <p class="text-[11px] text-slate-400">Parallel Ed25519 & Dilithium Quantum key configuration with balanced threshold coverage.</p>
+                </div>
+
+                <!-- Preset Option 4 -->
+                <div onclick="applyPreset('master_zero')" class="glass-panel-interactive p-4 rounded-xl cursor-pointer space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-white">Disable Master Key</span>
+                        <i class="fa-solid fa-shield-cat text-rose-400 text-xs"></i>
+                    </div>
+                    <p class="text-[11px] text-slate-400">Sets Master Key Weight to 0 while maintaining 2 independent hardware keys for ultimate cold storage.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 3: Transaction Envelope & XDR Simulation -->
+    <div id="modal-simulation" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm hidden">
+        <div class="glass-panel w-full max-w-2xl rounded-2xl p-6 space-y-5 border border-slate-700 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-file-code text-indigo-400"></i>
+                    <span>Stellar Transaction Construction</span>
+                </h3>
+                <button onclick="closeModal('modal-simulation')" class="text-slate-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
+                    <div class="flex items-center justify-between text-xs font-mono text-slate-400 border-b border-slate-900 pb-2">
+                        <span>OPERATION TYPE: SetOptions</span>
+                        <span class="text-emerald-400">Pre-Flight Safety: PASSED</span>
+                    </div>
+                    <div id="human-readable-ops" class="text-xs font-mono space-y-1.5 text-slate-300">
+                        <!-- Dynamic list of ops -->
+                    </div>
+                </div>
+
+                <!-- XDR Envelope Mock -->
+                <div class="space-y-1">
+                    <div class="flex items-center justify-between text-xs text-slate-400">
+                        <span>Raw XDR Envelope (Base64)</span>
+                        <button onclick="copyXDR()" class="text-indigo-400 hover:text-indigo-300 flex items-center gap-1 text-[11px]">
+                            <i class="fa-regular fa-copy"></i>
+                            <span>Copy XDR</span>
+                        </button>
+                    </div>
+                    <div id="xdr-preview-box" class="bg-slate-950 p-3 rounded-xl border border-slate-800 font-mono text-[11px] text-slate-500 break-all max-h-24 overflow-y-auto custom-scrollbar">
+                        AAAAAgAAAADe5J7M3o3s8p9z3L...AAAAAQAAAAAAAAA1AAAAAQAAAAAAAAA1AAAAAQAAAAA=
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-2 border-t border-slate-800">
+                <div class="flex items-center gap-2 text-xs text-slate-400">
+                    <i class="fa-solid fa-plug text-emerald-400"></i>
+                    <span>Wallet Extension: <b class="text-slate-200">Freighter Active</b></span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="closeModal('modal-simulation')" class="px-4 py-2 rounded-xl bg-slate-900 text-slate-300 hover:bg-slate-800 text-xs font-medium">Cancel</button>
+                    <button onclick="simulateBroadcast()" id="btn-broadcast" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-cyan-500 hover:from-indigo-500 hover:to-cyan-400 text-white font-semibold text-xs shadow-lg shadow-indigo-600/20 flex items-center gap-2">
+                        <i class="fa-solid fa-signature"></i>
+                        <span>Sign & Broadcast via Extension</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-900 bg-slate-950/60 py-4 px-4 lg:px-8 text-center text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+            <div>
+                Stellar Shield &copy; 2026 - Foolproof Native Multisig & Signer Studio for Stellar Protocol
+            </div>
+            <div class="flex items-center gap-4 text-[11px]">
+                <span class="text-slate-400"><i class="fa-solid fa-shield text-indigo-400 mr-1"></i> Pre-flight Guard Active</span>
+                <span class="text-slate-400"><i class="fa-solid fa-atom text-purple-400 mr-1"></i> Quantum Ready</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Application Logic Script -->
+    <script>
+        // --- APPLICATION STATE ---
+        const state = {
+            account: {
+                address: "GDKA7W39X9Z4K2L8M1N0P3Q5R7S9T2U4V6W8X1Y3Z5A7B9C1D3E5F7G9X4Z",
+                shortAddress: "GDKA...9X4Z",
+                balanceXLM: 1420.50,
+                masterWeight: 10
+            },
+            signers: [
+                {
+                    id: "s1",
+                    name: "Master Key (This Device)",
+                    key: "GDKA...9X4Z",
+                    fullKey: "GDKA7W39X9Z4K2L8M1N0P3Q5R7S9T2U4V6W8X1Y3Z5A7B9C1D3E5F7G9X4Z",
+                    weight: 10,
+                    badge: "Master",
+                    isMaster: true,
+                    activeInSim: true
+                },
+                {
+                    id: "s2",
+                    name: "Hardware Ledger Nano X",
+                    key: "GB9X...11AA",
+                    fullKey: "GB9X22BB33CC44DD55EE66FF77GG88HH99II00JJ11AA22BB33CC44DD55EE",
+                    weight: 10,
+                    badge: "Hardware",
+                    isMaster: false,
+                    activeInSim: true
+                },
+                {
+                    id: "s3",
+                    name: "Recovery Guardian (Partner Key)",
+                    key: "GC55...99ZZ",
+                    fullKey: "GC55667788990011223344556677889900112233445566778899ZZAA00BB",
+                    weight: 5,
+                    badge: "Backup",
+                    isMaster: false,
+                    activeInSim: true
+                }
+            ],
+            thresholds: {
+                low: 5,
+                medium: 10,
+                high: 15
+            },
+            quantumStep: 0
+        };
+
+        // --- INIT ON LOAD ---
+        window.onload = function() {
+            renderSigners();
+            updateCalculations();
+            renderSimulator();
+        };
+
+        // --- RENDER FUNCTIONS ---
+        function renderSigners() {
+            const container = document.getElementById('signers-container');
+            container.innerHTML = '';
+
+            state.signers.forEach((signer) => {
+                const badgeColor = getBadgeColor(signer.badge);
+                const card = document.createElement('div');
+                card.className = "glass-panel-interactive p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4";
+                
+                card.innerHTML = `
+                    <div class="flex items-start gap-3">
+                        <div class="w-9 h-9 rounded-xl ${badgeColor.bg} ${badgeColor.text} flex items-center justify-center shrink-0 font-bold text-sm mt-0.5">
+                            <i class="${getBadgeIcon(signer.badge)}"></i>
+                        </div>
+                        <div class="space-y-0.5">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="font-bold text-sm text-white">${signer.name}</span>
+                                <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold border ${badgeColor.bg} ${badgeColor.text} ${badgeColor.border}">
+                                    ${signer.badge}
+                                </span>
+                            </div>
+                            <div class="font-mono text-xs text-slate-400 flex items-center gap-2">
+                                <span>${signer.key}</span>
+                                <button onclick="copyToClipboard('${signer.fullKey}')" class="text-slate-500 hover:text-slate-300">
+                                    <i class="fa-regular fa-copy text-[10px]"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-4 self-end sm:self-auto border-t sm:border-t-0 border-slate-800/80 pt-3 sm:pt-0 w-full sm:w-auto justify-between sm:justify-end">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-slate-400 font-medium">Weight:</span>
+                            <div class="flex items-center bg-slate-900 border border-slate-800 rounded-lg p-0.5">
+                                <button onclick="adjustSignerWeight('${signer.id}', -1)" class="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-white bg-slate-800/50 rounded hover:bg-slate-700 text-xs font-bold">-</button>
+                                <span class="w-8 text-center font-mono font-bold text-xs text-indigo-400">${signer.weight}</span>
+                                <button onclick="adjustSignerWeight('${signer.id}', 1)" class="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-white bg-slate-800/50 rounded hover:bg-slate-700 text-xs font-bold">+</button>
+                            </div>
+                        </div>
+
+                        ${!signer.isMaster ? `
+                            <button onclick="removeSigner('${signer.id}')" class="p-2 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors" title="Remove Signer">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        ` : `
+                            <span class="text-[10px] text-amber-400/70 font-mono px-2 py-1 bg-amber-500/10 rounded border border-amber-500/20">Master</span>
+                        `}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            document.getElementById('signer-count-label').innerText = `(${state.signers.length} Active)`;
+            document.getElementById('stat-active-signers').innerText = state.signers.length;
+        }
+
+        // --- CORE CALCULATION & SAFETY PRE-FLIGHT LOGIC ---
+        function updateCalculations() {
+            // Calculate Total Max Reachable Weight
+            const totalWeight = state.signers.reduce((acc, s) => acc + s.weight, 0);
+            
+            document.getElementById('stat-total-weight').innerText = totalWeight;
+            document.getElementById('stat-high-threshold').innerText = state.thresholds.high;
+
+            // Sync threshold UI values
+            document.getElementById('val-low-threshold').innerText = state.thresholds.low;
+            document.getElementById('val-med-threshold').innerText = state.thresholds.medium;
+            document.getElementById('val-high-threshold').innerText = state.thresholds.high;
+
+            // Master Key Weight Sync
+            const masterSigner = state.signers.find(s => s.isMaster);
+            if (masterSigner) {
+                state.account.masterWeight = masterSigner.weight;
+                document.getElementById('master-weight-display').innerText = masterSigner.weight;
+            }
+
+            // Perform Safety Pre-Flight Checks
+            const preflightBanner = document.getElementById('preflight-banner');
+            const submitBtn = document.getElementById('btn-submit-tx');
+            const securityBadge = document.getElementById('security-status-badge');
+            const securityDesc = document.getElementById('security-status-desc');
+            const securityIcon = document.getElementById('security-icon');
+            const securityIconContainer = document.getElementById('security-icon-container');
+
+            const isHighLocked = state.thresholds.high > totalWeight;
+            const isMedLocked = state.thresholds.medium > totalWeight;
+            const isLowLocked = state.thresholds.low > totalWeight;
+            const isAnyLocked = isHighLocked || isMedLocked || isLowLocked;
+
+            if (isAnyLocked) {
+                // RED ALERT: ACCOUNT UNREACHABLE / LOCKED OUT
+                preflightBanner.className = "p-3.5 rounded-xl bg-rose-950/50 border border-rose-500/50 text-xs space-y-1 transition-all text-rose-200";
+                preflightBanner.innerHTML = `
+                    <div class="flex items-center gap-2 font-bold text-rose-400">
+                        <i class="fa-solid fa-triangle-exclamation text-sm animate-bounce"></i>
+                        <span>CRITICAL LOCKOUT WARNING!</span>
+                    </div>
+                    <p class="text-[11px] leading-relaxed text-rose-300/90">
+                        Required High Threshold (<b>${state.thresholds.high}</b>) exceeds Total Accumulated Key Weight (<b>${totalWeight}</b>). Submitting this change will <b>PERMANENTLY LOCK YOU OUT</b> of this account forever!
+                    </p>
+                `;
+
+                submitBtn.disabled = true;
+                submitBtn.className = "w-full py-3 rounded-xl bg-slate-800 text-slate-500 font-semibold text-xs cursor-not-allowed flex items-center justify-center gap-2";
+
+                securityBadge.className = "px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/30";
+                securityBadge.innerText = "CRITICAL RISK - LOCKOUT DETECTED";
+                securityDesc.innerText = "Current configuration is invalid. Total signer weights cannot reach required action thresholds.";
+                securityIcon.className = "fa-solid fa-lock text-2xl text-rose-400";
+                securityIconContainer.className = "h-14 w-14 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center shrink-0";
+            } else if (state.signers.length === 1 && state.signers[0].isMaster) {
+                // SINGLE POINT OF FAILURE
+                preflightBanner.className = "p-3.5 rounded-xl bg-amber-950/40 border border-amber-500/30 text-xs space-y-1 transition-all text-amber-200";
+                preflightBanner.innerHTML = `
+                    <div class="flex items-center gap-2 font-bold text-amber-400">
+                        <i class="fa-solid fa-shield-cat text-sm"></i>
+                        <span>Single Point of Failure</span>
+                    </div>
+                    <p class="text-[11px] text-amber-300/80">
+                        Account relies on a single key. Consider adding a hardware wallet or recovery backup signer.
+                    </p>
+                `;
+
+                submitBtn.disabled = false;
+                submitBtn.className = "w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-cyan-500 hover:from-indigo-500 hover:to-cyan-400 text-white font-semibold text-xs tracking-wide shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2 transition-all active:scale-[0.98]";
+
+                securityBadge.className = "px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30";
+                securityBadge.innerText = "At Risk - Single Key";
+                securityDesc.innerText = "You have no secondary signers or recovery paths configured. Losing this single seed phrase forfeits funds.";
+                securityIcon.className = "fa-solid fa-shield-halved text-2xl text-amber-400";
+                securityIconContainer.className = "h-14 w-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center shrink-0";
+            } else {
+                // ALL SAFE & BALANCED
+                preflightBanner.className = "p-3.5 rounded-xl bg-emerald-950/30 border border-emerald-500/30 text-xs space-y-1 transition-all text-emerald-200";
+                preflightBanner.innerHTML = `
+                    <div class="flex items-center gap-2 font-bold text-emerald-400">
+                        <i class="fa-solid fa-circle-check text-sm"></i>
+                        <span>Pre-Flight Validation Passed</span>
+                    </div>
+                    <p class="text-[11px] text-emerald-300/80">
+                        All thresholds are mathematically reachable. Total Weight (${totalWeight}) ≥ High Threshold (${state.thresholds.high}).
+                    </p>
+                `;
+
+                submitBtn.disabled = false;
+                submitBtn.className = "w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-cyan-500 hover:from-indigo-500 hover:to-cyan-400 text-white font-semibold text-xs tracking-wide shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2 transition-all active:scale-[0.98]";
+
+                securityBadge.className = "px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+                securityBadge.innerText = "Robust Multisig Active";
+                securityDesc.innerText = "Account security is optimally configured across multiple independent signers with safety buffers.";
+                securityIcon.className = "fa-solid fa-shield-check text-2xl text-emerald-400";
+                securityIconContainer.className = "h-14 w-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center shrink-0";
+            }
+
+            renderSimulator();
+        }
+
+        // --- HANDLERS & INPUT SYNC ---
+        function adjustSignerWeight(id, delta) {
+            const signer = state.signers.find(s => s.id === id);
+            if (signer) {
+                signer.weight = Math.max(0, signer.weight + delta);
+                renderSigners();
+                updateCalculations();
+            }
+        }
+
+        function removeSigner(id) {
+            state.signers = state.signers.filter(s => s.id !== id);
+            renderSigners();
+            updateCalculations();
+        }
+
+        function updateThresholdsFromInputs() {
+            state.thresholds.low = parseInt(document.getElementById('input-low-threshold').value);
+            state.thresholds.medium = parseInt(document.getElementById('input-med-threshold').value);
+            state.thresholds.high = parseInt(document.getElementById('input-high-threshold').value);
+            updateCalculations();
+        }
+
+        function openAddSignerModal() {
+            document.getElementById('modal-add-signer').classList.remove('hidden');
+        }
+
+        function openPresetsModal() {
+            document.getElementById('modal-presets').classList.remove('hidden');
+        }
+
+        function openSimulationModal() {
+            renderXDRSimulation();
+            document.getElementById('modal-simulation').classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function confirmAddSigner() {
+            const name = document.getElementById('new-signer-name').value || "Secondary Key";
+            const rawKey = document.getElementById('new-signer-key').value || "GBC3...88YY";
+            const badge = document.getElementById('new-signer-badge').value;
+            const weight = parseInt(document.getElementById('new-signer-weight').value) || 5;
+
+            const newSigner = {
+                id: "s_" + Date.now(),
+                name: name,
+                key: rawKey.length > 10 ? rawKey.substring(0, 4) + '...' + rawKey.substring(rawKey.length - 4) : rawKey,
+                fullKey: rawKey,
+                weight: weight,
+                badge: badge,
+                isMaster: false,
+                activeInSim: true
+            };
+
+            state.signers.push(newSigner);
+            closeModal('modal-add-signer');
+            renderSigners();
+            updateCalculations();
+        }
+
+        function applyPreset(presetType) {
+            if (presetType === '2of2') {
+                state.signers = [
+                    { id: "s1", name: "Primary Mobile Key", key: "GDKA...9X4Z", fullKey: "GDKA7W39X9Z4K2L8M1N0P3Q5R7S9T2U4V6W8X1Y3Z5A7B9C1D3E5F7G9X4Z", weight: 10, badge: "Master", isMaster: true, activeInSim: true },
+                    { id: "s2", name: "Ledger Cold Storage", key: "GB9X...11AA", fullKey: "GB9X22BB33CC44DD55EE66FF77GG88HH99II00JJ11AA22BB33CC44DD55EE", weight: 10, badge: "Hardware", isMaster: false, activeInSim: true }
+                ];
+                state.thresholds = { low: 10, medium: 20, high: 20 };
+            } else if (presetType === 'social') {
+                state.signers = [
+                    { id: "s1", name: "Master Phone Key", key: "GDKA...9X4Z", fullKey: "GDKA7W39X9Z4K2L8M1N0P3Q5R7S9T2U4V6W8X1Y3Z5A7B9C1D3E5F7G9X4Z", weight: 10, badge: "Master", isMaster: true, activeInSim: true },
+                    { id: "s2", name: "Guardian 1 (Alice)", key: "GC11...22AA", fullKey: "GC11223344556677889900112233445566778899001122334455667788AA", weight: 5, badge: "Backup", isMaster: false, activeInSim: true },
+                    { id: "s3", name: "Guardian 2 (Bob)", key: "GD33...44BB", fullKey: "GD334455667788990011223344556677889900112233445566778899BB", weight: 5, badge: "Backup", isMaster: false, activeInSim: true }
+                ];
+                state.thresholds = { low: 10, medium: 10, high: 15 };
+            } else if (presetType === 'pq_ready') {
+                state.signers = [
+                    { id: "s1", name: "Legacy Ed25519 Key", key: "GDKA...9X4Z", fullKey: "GDKA7W39X9Z4K2L8M1N0P3Q5R7S9T2U4V6W8X1Y3Z5A7B9C1D3E5F7G9X4Z", weight: 10, badge: "Master", isMaster: true, activeInSim: true },
+                    { id: "s_pq", name: "Dilithium Post-Quantum Key", key: "PQ99...44ZZ", fullKey: "PQ9988776655443322110099887766554433221100998877665544ZZ", weight: 10, badge: "Quantum", isMaster: false, activeInSim: true }
+                ];
+                state.thresholds = { low: 10, medium: 10, high: 20 };
+            } else if (presetType === 'master_zero') {
+                state.signers = [
+                    { id: "s1", name: "Master Key (Disabled)", key: "GDKA...9X4Z", fullKey: "GDKA7W39X9Z4K2L8M1N0P3Q5R7S9T2U4V6W8X1Y3Z5A7B9C1D3E5F7G9X4Z", weight: 0, badge: "Master", isMaster: true, activeInSim: true },
+                    { id: "s2", name: "Hardware Key A", key: "GB9X...11AA", fullKey: "GB9X22BB33CC44DD55EE66FF77GG88HH99II00JJ11AA22BB33CC44DD55EE", weight: 10, badge: "Hardware", isMaster: false, activeInSim: true },
+                    { id: "s3", name: "Hardware Key B", key: "GC55...99ZZ", fullKey: "GC55667788990011223344556677889900112233445566778899ZZAA00BB", weight: 10, badge: "Hardware", isMaster: false, activeInSim: true }
+                ];
+                state.thresholds = { low: 10, medium: 10, high: 20 };
+            }
+
+            // Sync Sliders
+            document.getElementById('input-low-threshold').value = state.thresholds.low;
+            document.getElementById('input-med-threshold').value = state.thresholds.medium;
+            document.getElementById('input-high-threshold').value = state.thresholds.high;
+
+            closeModal('modal-presets');
+            renderSigners();
+            updateCalculations();
+        }
+
+        // --- LOSS SIMULATOR LOGIC ---
+        function renderSimulator() {
+            const container = document.getElementById('simulator-keys-list');
+            if (!container) return;
+            container.innerHTML = '';
+
+            state.signers.forEach((signer) => {
+                const item = document.createElement('div');
+                item.className = "bg-slate-900 border border-slate-800 p-3 rounded-xl flex items-center justify-between";
+                item.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <input type="checkbox" id="sim-chk-${signer.id}" ${signer.activeInSim ? 'checked' : ''} onchange="toggleSimKey('${signer.id}')" class="w-4 h-4 accent-indigo-500 rounded cursor-pointer">
+                        <div>
+                            <div class="text-xs font-bold text-slate-200">${signer.name}</div>
+                            <div class="text-[10px] text-slate-400 font-mono">Weight: ${signer.weight}</div>
+                        </div>
+                    </div>
+                    <span class="text-[10px] px-2 py-0.5 rounded font-mono ${signer.activeInSim ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}">
+                        ${signer.activeInSim ? 'AVAILABLE' : 'LOST / DESTROYED'}
+                    </span>
+                `;
+                container.appendChild(item);
+            });
+
+            // Calculate Simulation State
+            const availableWeight = state.signers.filter(s => s.activeInSim).reduce((acc, s) => acc + s.weight, 0);
+            const resultsBox = document.getElementById('sim-results-container');
+
+            const canPay = availableWeight >= state.thresholds.medium;
+            const canRecover = availableWeight >= state.thresholds.high;
+
+            resultsBox.innerHTML = `
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="text-slate-400">Available Weight in Simulation:</span>
+                        <span class="font-mono font-bold text-white text-base">${availableWeight} / ${state.signers.reduce((a,b)=>a+b.weight,0)}</span>
+                    </div>
+
+                    <!-- Payment Capability -->
+                    <div class="p-3 rounded-xl border ${canPay ? 'bg-emerald-950/30 border-emerald-500/30 text-emerald-300' : 'bg-rose-950/30 border-rose-500/30 text-rose-300'} flex items-start gap-2.5">
+                        <i class="fa-solid ${canPay ? 'fa-circle-check text-emerald-400' : 'fa-circle-xmark text-rose-400'} text-base mt-0.5"></i>
+                        <div class="space-y-0.5">
+                            <div class="text-xs font-bold">Medium Threshold (Payments): ${canPay ? 'ACCESSIBLE' : 'BLOCKED'}</div>
+                            <p class="text-[11px] text-slate-400">
+                                ${canPay ? 'You can still execute daily payments and DEX trades.' : 'Insufficient weight available to initiate payments or transfers!'}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Signer Recovery Capability -->
+                    <div class="p-3 rounded-xl border ${canRecover ? 'bg-emerald-950/30 border-emerald-500/30 text-emerald-300' : 'bg-rose-950/30 border-rose-500/30 text-rose-300'} flex items-start gap-2.5">
+                        <i class="fa-solid ${canRecover ? 'fa-shield-check text-emerald-400' : 'fa-triangle-exclamation text-rose-400'} text-base mt-0.5"></i>
+                        <div class="space-y-0.5">
+                            <div class="text-xs font-bold">High Threshold (Signer Recovery): ${canRecover ? 'ACCESSIBLE' : 'PERMANENTLY LOCKED'}</div>
+                            <p class="text-[11px] text-slate-400">
+                                ${canRecover ? 'You can add new signers or remove lost devices safely.' : 'Critical Failure! You cannot reach high threshold to reset your signers.'}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleSimKey(id) {
+            const signer = state.signers.find(s => s.id === id);
+            if (signer) {
+                signer.activeInSim = !signer.activeInSim;
+                renderSimulator();
+            }
+        }
+
+        // --- QUANTUM SAFE MIGRATION WIZARD ---
+        function executeQuantumStep(step) {
+            const consoleBox = document.getElementById('pq-console');
+            const indicator = document.getElementById('pq-status-indicator');
+
+            if (step === 1) {
+                state.signers.push({
+                    id: "s_pq_gen",
+                    name: "Dilithium-5 Post-Quantum Key",
+                    key: "PQ_DILITHIUM...99X",
+                    fullKey: "PQ_DILITHIUM5_88990011223344556677889900112233445566778899X",
+                    weight: 15,
+                    badge: "Quantum",
+                    isMaster: false,
+                    activeInSim: true
+                });
+
+                consoleBox.innerHTML += `<div class="text-emerald-400">[SUCCESS]: Generated Post-Quantum Dilithium Keypair. Added as active signer (Weight: 15).</div>`;
+                indicator.innerText = "Step 1 Completed";
+
+                document.getElementById('pq-step-1-btn').disabled = true;
+                document.getElementById('pq-step-1-btn').className = "w-full mt-2 py-2 rounded-lg bg-slate-800 text-slate-500 font-medium text-xs cursor-not-allowed";
+                
+                document.getElementById('pq-step-2-btn').disabled = false;
+                document.getElementById('pq-step-2-btn').className = "w-full mt-2 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-medium text-xs transition-colors";
+
+                renderSigners();
+                updateCalculations();
+            } else if (step === 2) {
+                consoleBox.innerHTML += `<div class="text-cyan-400">[INFO]: Constructing dual-signed test envelope...</div>`;
+                setTimeout(() => {
+                    consoleBox.innerHTML += `<div class="text-emerald-400">[VERIFIED]: Hybrid Ed25519 + Dilithium signatures validated by Stellar Core simulator!</div>`;
+                    indicator.innerText = "Step 2 Verified";
+
+                    document.getElementById('pq-step-2-btn').disabled = true;
+                    document.getElementById('pq-step-2-btn').className = "w-full mt-2 py-2 rounded-lg bg-slate-800 text-slate-500 font-medium text-xs cursor-not-allowed";
+
+                    document.getElementById('pq-step-3-btn').disabled = false;
+                    document.getElementById('pq-step-3-btn').className = "w-full mt-2 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-medium text-xs transition-colors";
+                }, 800);
+            } else if (step === 3) {
+                const master = state.signers.find(s => s.isMaster);
+                if (master) master.weight = 0;
+
+                consoleBox.innerHTML += `<div class="text-rose-400">[DEPRECATED]: Master Ed25519 Key weight set to 0. Account control fully transferred to Post-Quantum signer.</div>`;
+                indicator.innerText = "Quantum Migration Complete!";
+
+                document.getElementById('pq-step-3-btn').disabled = true;
+                document.getElementById('pq-step-3-btn').className = "w-full mt-2 py-2 rounded-lg bg-slate-800 text-slate-500 font-medium text-xs cursor-not-allowed";
+
+                renderSigners();
+                updateCalculations();
+            }
+        }
+
+        // --- XDR SIMULATION DISPLAY ---
+        function renderXDRSimulation() {
+            const container = document.getElementById('human-readable-ops');
+            container.innerHTML = '';
+
+            state.signers.forEach((s) => {
+                container.innerHTML += `
+                    <div class="flex items-center justify-between border-b border-slate-900/60 pb-1">
+                        <span class="text-slate-400">Set Signer: <b class="text-slate-200">${s.name}</b></span>
+                        <span class="text-indigo-400">Weight: ${s.weight}</span>
+                    </div>
+                `;
+            });
+
+            container.innerHTML += `
+                <div class="flex items-center justify-between pt-1 font-bold text-slate-200">
+                    <span>Set Thresholds (Low/Med/High):</span>
+                    <span class="text-cyan-400">${state.thresholds.low} / ${state.thresholds.medium} / ${state.thresholds.high}</span>
+                </div>
+            `;
+        }
+
+        function simulateBroadcast() {
+            const btn = document.getElementById('btn-broadcast');
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Broadcasting to Stellar...`;
+            setTimeout(() => {
+                btn.innerHTML = `<i class="fa-solid fa-check text-emerald-400"></i> Confirmed in Ledger #528912!`;
+                setTimeout(() => {
+                    closeModal('modal-simulation');
+                    btn.innerHTML = `<i class="fa-solid fa-signature"></i> Sign & Broadcast via Extension`;
+                }, 1200);
+            }, 1500);
+        }
+
+        // --- TAB SWITCHER ---
+        function switchTab(tabName) {
+            document.getElementById('view-dashboard').classList.add('hidden');
+            document.getElementById('view-simulator').classList.add('hidden');
+            document.getElementById('view-quantum').classList.add('hidden');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = "tab-btn px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 bg-slate-900/60 text-slate-400 hover:text-slate-200 border border-transparent hover:border-slate-800 transition-all";
+            });
+
+            if (tabName === 'dashboard') {
+                document.getElementById('view-dashboard').classList.remove('hidden');
+                document.getElementById('tab-dashboard').className = "tab-btn px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 transition-all";
+            } else if (tabName === 'simulator') {
+                document.getElementById('view-simulator').classList.remove('hidden');
+                document.getElementById('tab-simulator').className = "tab-btn px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 transition-all";
+            } else if (tabName === 'quantum') {
+                document.getElementById('view-quantum').classList.remove('hidden');
+                document.getElementById('tab-quantum').className = "tab-btn px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 bg-purple-600/20 text-purple-300 border border-purple-500/30 transition-all";
+            }
+        }
+
+        // --- UTILITY HELPERS ---
+        function copyAddress() {
+            copyToClipboard(state.account.address);
+        }
+
+        function copyXDR() {
+            copyToClipboard("AAAAAgAAAADe5J7M3o3s8p9z3L8vK2L8M1N0P3Q5R7S9T2U4V6W8X1Y3Z5A7B9C1D3E5F7G9X4ZAAAAAQAAAAAAAAA1AAAAAQAAAAAAAAA1AAAAAQAAAAA=");
+        }
+
+        function copyToClipboard(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            
+            // Visual Feedback Toast
+            const toast = document.createElement('div');
+            toast.className = "fixed bottom-5 right-5 bg-slate-900 text-slate-200 border border-slate-700 px-4 py-2 rounded-xl text-xs z-50 shadow-xl flex items-center gap-2";
+            toast.innerHTML = `<i class="fa-solid fa-check text-emerald-400"></i> Copied to clipboard!`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
+        }
+
+        function getBadgeColor(badge) {
+            switch(badge) {
+                case 'Master': return { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/20' };
+                case 'Hardware': return { bg: 'bg-indigo-500/10', text: 'text-indigo-400', border: 'border-indigo-500/20' };
+                case 'Backup': return { bg: 'bg-cyan-500/10', text: 'text-cyan-400', border: 'border-cyan-500/20' };
+                case 'Quantum': return { bg: 'bg-purple-500/10', text: 'text-purple-400', border: 'border-purple-500/20' };
+                default: return { bg: 'bg-slate-500/10', text: 'text-slate-400', border: 'border-slate-500/20' };
+            }
+        }
+
+        function getBadgeIcon(badge) {
+            switch(badge) {
+                case 'Master': return 'fa-solid fa-crown';
+                case 'Hardware': return 'fa-solid fa-microchip';
+                case 'Backup': return 'fa-solid fa-users';
+                case 'Quantum': return 'fa-solid fa-atom';
+                default: return 'fa-solid fa-key';
+            }
+        }
+    </script>
+</body>
+</html>
